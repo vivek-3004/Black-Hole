@@ -4,16 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
+    <!-- Resource Hints for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
     <!-- Primary Meta Tags -->
     <title>THE ABYSS | Interactive Black Hole Exploration & Scientific Guide</title>
     <meta name="title" content="THE ABYSS | Interactive Black Hole Exploration & Scientific Guide">
     <meta name="description" content="An immersive cinematic journey into the physics of black holes. Explore event horizons, time dilation, and the singularity through a high-fidelity 3D simulation.">
-    <meta name="keywords" content="black hole, event horizon, singularity, time dilation, astrophysics, 3D space simulation, interactive science">
+    <meta name="keywords" content="black hole simulation, event horizon physics, gravitational time dilation, general relativity interactive, schwarzschild radius calculator, space visualization, astrophysics educational tool, 3D singularity model">
     <meta name="author" content="The Abyss Orbital Station">
+    <link rel="canonical" href="https://vivek-3004.github.io/Black-Hole/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://vivek-3004.github.io/Black-Hole/">
+    <meta property="og:url" content="https://the-abyss-experience.com/">
     <meta property="og:title" content="THE ABYSS | Cinematic Black Hole Experience">
     <meta property="og:description" content="Explore the mysteries of the cosmos with our interactive 3D black hole simulator. Scientific insights on event horizons and general relativity.">
     <meta property="og:image" content="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80">
@@ -23,21 +30,41 @@
     <meta property="twitter:title" content="THE ABYSS | Cinematic Black Hole Experience">
     <meta property="twitter:description" content="Interactive 3D simulation and scientific guide to the secrets of black holes and the event horizon.">
 
-    <!-- Structured Data (JSON-LD) for SEO -->
+    <!-- Structured Data: Article & FAQ for Rich Snippets -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "Understanding the Secrets of Black Holes",
-      "description": "A comprehensive guide and interactive experience exploring the formation, types, and physics of black holes.",
-      "author": {
-        "@type": "Organization",
-        "name": "The Abyss Research Division"
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Understanding the Secrets of Black Holes",
+        "description": "A comprehensive guide and interactive experience exploring the formation, types, and physics of black holes.",
+        "author": {
+          "@type": "Organization",
+          "name": "The Abyss Research Division"
+        },
+        "genre": "Astrophysics",
+        "image": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80"
       },
-      "genre": "Astrophysics",
-      "keywords": "Black Holes, Event Horizon, Singularity, M87, Sagittarius A*",
-      "image": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80"
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [{
+          "@type": "Question",
+          "name": "What is the Schwarzschild radius?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Schwarzschild radius is the radius of the event horizon surrounding a non-rotating black hole. Within this radius, gravity is so strong that not even light can escape."
+          }
+        }, {
+          "@type": "Question",
+          "name": "How is a black hole formed?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Black holes are typically formed when a massive star exhausts its nuclear fuel and collapses under its own gravity, creating a supernova explosion and leaving behind a dense core."
+          }
+        }]
+      }
+    ]
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -227,11 +254,26 @@
             pointer-events: none;
             opacity: 0.1;
         }
+
+        /* Accessibility: Visual Hidden H1 for SEO Crawler */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
     </style>
 </head>
 <body class="bg-black">
 
     <div class="scanlines"></div>
+
+    <!-- Hidden H1 for SEO: Ensures context before user interactions -->
+    <h1 class="sr-only">Interactive Black Hole Physics and 3D Event Horizon Simulation</h1>
 
     <!-- Background Control HUD -->
     <nav id="control-panel" aria-label="Simulation Controls">
@@ -245,18 +287,18 @@
         <div id="shatter-glass-container"></div>
         <div class="flex flex-col items-center gap-8 relative z-[102] px-4 text-center">
             <div id="shutter-status" class="font-sync text-[10px] text-white/40 tracking-[0.5em] uppercase animate-pulse">Structural Integrity: 100%</div>
-            <button id="shutter-btn" onclick="shatterAirlock()" aria-label="Start Simulation">Initiate Emergency Vent</button>
-            <div id="shutter-loader" class="w-24 h-1 bg-white/10 overflow-hidden">
+            <button id="shutter-btn" onclick="shatterAirlock()" aria-label="Initiate Black Hole Simulation">Initiate Emergency Vent</button>
+            <div id="shutter-loader" class="w-24 h-1 bg-white/10 overflow-hidden" aria-hidden="true">
                 <div class="w-full h-full bg-orange-500 origin-left scale-x-0" id="shutter-progress"></div>
             </div>
-            <p class="text-[10px] text-white/20 uppercase tracking-widest max-w-xs leading-relaxed">Warning: Depressurization will occur immediately upon command.</p>
+            <p class="text-[10px] text-white/20 uppercase tracking-widest max-w-xs leading-relaxed">Warning: Depressurization will occur immediately upon command. Sensory input restricted.</p>
         </div>
     </div>
 
     <div id="viewport-frame" aria-hidden="true"></div>
 
     <!-- Telemetry HUD -->
-    <aside id="telemetry-hud" class="font-mono" aria-label="Real-time Telemetry">
+    <aside id="telemetry-hud" class="font-mono" aria-label="Real-time Simulation Data">
         <div class="data-point">
             <span class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest block">Schwarzschild Radius</span>
             <div class="text-lg md:text-xl text-white" id="stat-radius">12.42 km</div>
@@ -271,15 +313,15 @@
         </div>
     </aside>
 
-    <div id="canvas-container" aria-hidden="true"></div>
+    <div id="canvas-container" role="img" aria-label="3D Visualization of a Black Hole with an Accretion Disk"></div>
 
     <main id="main-content">
         <!-- Hero Section -->
         <section class="h-screen flex items-center justify-center pointer-events-none">
             <div class="text-center px-4">
-                <h1 class="font-sync text-4xl sm:text-6xl md:text-[10rem] font-bold text-white tracking-tighter mix-blend-difference">
+                <div class="font-sync text-4xl sm:text-6xl md:text-[10rem] font-bold text-white tracking-tighter mix-blend-difference" aria-hidden="true">
                     ABYSS
-                </h1>
+                </div>
                 <p class="font-sync text-[8px] sm:text-[10px] text-orange-500 tracking-[0.5em] sm:tracking-[0.8em] uppercase mt-4">Containment Protocol Breached</p>
             </div>
         </section>
@@ -564,4 +606,3 @@
     </script>
 </body>
 </html>
-

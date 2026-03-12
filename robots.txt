@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vivek-3004.github.io/Black-Hole/sitemap.xml

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE ABYSS | Cinematic Orbital Station</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Post-processing Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-orange: #ff5e00;
+            --deep-void: #010103;
+        }
+
+        body {
+            background-color: #000;
+            color: #e2e8f0;
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            overflow: hidden; 
+            touch-action: none;
+        }
+
+        .font-sync { font-family: 'Syncopate', sans-serif; }
+
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            z-index: 1;
+        }
+
+        /* Shatter Effect Styles */
+        #airlock-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            perspective: 1000px;
+        }
+
+        #shatter-glass-container {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(12, 1fr);
+            pointer-events: none;
+        }
+
+        .glass-shard {
+            background: rgba(15, 15, 20, 0.98);
+            border: 0.5px solid rgba(255, 94, 0, 0.15);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        #shutter-btn {
+            position: relative;
+            z-index: 101;
+            padding: 1.5rem 3rem;
+            border: 1px solid rgba(255, 94, 0, 0.5);
+            background: rgba(0,0,0,0.9);
+            color: var(--neon-orange);
+            font-family: 'Syncopate', sans-serif;
+            font-size: clamp(0.6rem, 2vw, 0.75rem);
+            letter-spacing: 0.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(255, 94, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        #shutter-btn:hover {
+            background: var(--neon-orange);
+            color: black;
+            box-shadow: 0 0 60px rgba(255, 94, 0, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* UI Overlays */
+        #viewport-frame {
+            position: fixed;
+            inset: 0;
+            border: 15px solid #0a0a0c;
+            border-image: linear-gradient(#111, #000) 1;
+            pointer-events: none;
+            z-index: 90;
+            opacity: 0;
+        }
+
+        #telemetry-hud {
+            position: fixed;
+            top: 40px;
+            left: 20px;
+            z-index: 95;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @media (min-width: 768px) {
+            #viewport-frame { border-width: 40px; }
+            #telemetry-hud { top: 60px; left: 60px; }
+        }
+
+        .data-point {
+            margin-bottom: 1.5rem;
+            border-left: 2px solid var(--neon-orange);
+            padding-left: 1rem;
+        }
+
+        .glass-card {
+            background: rgba(8, 8, 15, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        #main-content {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            position: relative;
+            z-index: 10;
+        }
+
+        #main-content.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        /* Control Panel */
+        #control-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 95;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            opacity: 0;
+            transition: opacity 1s;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .ctrl-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 12px;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+        }
+
+        @media (min-width: 768px) {
+            .ctrl-btn { padding: 8px 16px; font-size: 10px; letter-spacing: 2px; }
+            #control-panel { bottom: 40px; width: auto; }
+        }
+
+        .ctrl-btn:hover { background: rgba(255,255,255,0.2); }
+        .ctrl-btn.active { border-color: var(--neon-orange); color: var(--neon-orange); }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.2) 50%);
+            background-size: 100% 4px;
+            z-index: 99;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <div class="scanlines"></div>
+
+    <!-- Background Control HUD -->
+    <div id="control-panel">
+        <button class="ctrl-btn active" onclick="toggleHUD(this)">HUD: ON</button>
+        <button class="ctrl-btn" onclick="boostRadiation(this)">EMISSION: NORM</button>
+        <button class="ctrl-btn" onclick="toggleLensing(this)">LENSING: ACTIVE</button>
+    </div>
+
+    <!-- Opening Screen with Glass Shatter -->
+    <div id="airlock-overlay">
+        <div id="shatter-glass-container"></div>
+        <div class="flex flex-col items-center gap-8 relative z-[102] px-4 text-center">
+            <div id="shutter-status" class="font-sync text-[10px] text-white/40 tracking-[0.5em] uppercase animate-pulse">Structural Integrity: 100%</div>
+            <button id="shutter-btn" onclick="shatterAirlock()">Initiate Emergency Vent</button>
+            <div id="shutter-loader" class="w-24 h-1 bg-white/10 overflow-hidden">
+                <div class="w-full h-full bg-orange-500 origin-left scale-x-0" id="shutter-progress"></div>
+            </div>
+            <p class="text-[10px] text-white/20 uppercase tracking-widest max-w-xs leading-relaxed">Warning: Depressurization will occur immediately upon command.</p>
+        </div>
+    </div>
+
+    <div id="viewport-frame"></div>
+
+    <!-- Telemetry HUD -->
+    <div id="telemetry-hud" class="font-mono">
+        <div class="data-point">
+            <div class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest">Schwarzschild Radius</div>
+            <div class="text-lg md:text-xl text-white" id="stat-radius">12.42 km</div>
+        </div>
+        <div class="data-point">
+            <div class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest">Time Dilation Factor</div>
+            <div class="text-lg md:text-xl text-white" id="stat-dilation">1.0000x</div>
+        </div>
+        <div class="data-point">
+            <div class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest">Distance to Singularity</div>
+            <div class="text-lg md:text-xl text-white" id="stat-dist">62,000 km</div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section class="h-screen flex items-center justify-center pointer-events-none">
+            <div class="text-center px-4">
+                <h1 class="font-sync text-4xl sm:text-6xl md:text-[10rem] font-bold text-white tracking-tighter mix-blend-difference">
+                    ABYSS
+                </h1>
+                <p class="font-sync text-[8px] sm:text-[10px] text-orange-500 tracking-[0.5em] sm:tracking-[0.8em] uppercase mt-4">Containment Protocol Breached</p>
+            </div>
+        </section>
+
+        <!-- Article Section -->
+        <section class="min-h-screen py-10 sm:py-20 px-4 sm:px-6 md:px-20 lg:px-40 flex flex-col items-center">
+            <div class="max-w-4xl glass-card p-6 sm:p-8 md:p-16 border-white/10 leading-relaxed text-gray-300">
+                <h2 class="font-sync text-xl sm:text-2xl md:text-4xl text-white mb-6 border-b border-orange-500/30 pb-4">Understanding the Secrets of Black Holes</h2>
+                
+                <p class="text-base sm:text-lg mb-8 text-white/90 italic">
+                    Black holes are among the most mysterious and fascinating objects in the universe. They are places where gravity becomes so strong that nothing—not even light—can escape their pull.
+                </p>
+
+                <div class="space-y-8 sm:space-y-12">
+                    <div>
+                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">1. Formation & Types</h3>
+                        <p class="mb-4 text-sm sm:text-base">A black hole is formed when an enormous amount of mass is compressed into a very small space. Most are born from the deaths of massive stars.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6">
+                            <div class="bg-white/5 p-4 rounded border border-white/5">
+                                <strong class="text-white block text-sm mb-1 uppercase">Stellar</strong>
+                                <span class="text-[10px] sm:text-xs">Formed from collapsing stars.</span>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded border border-white/5">
+                                <strong class="text-white block text-sm mb-1 uppercase">Intermediate</strong>
+                                <span class="text-[10px] sm:text-xs">Formed through mergers.</span>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded border border-white/5">
+                                <strong class="text-white block text-sm mb-1 uppercase">Supermassive</strong>
+                                <span class="text-[10px] sm:text-xs">Found at galactic centers.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">2. Horizon & Singularity</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                            <div class="border-l border-white/10 pl-6">
+                                <h4 class="text-white font-bold mb-2">Event Horizon</h4>
+                                <p class="text-xs sm:text-sm">The "Point of No Return". The boundary where escape velocity exceeds light speed. This is what creates the dark "shadow" we observe.</p>
+                            </div>
+                            <div class="border-l border-white/10 pl-6">
+                                <h4 class="text-white font-bold mb-2">Singularity</h4>
+                                <p class="text-xs sm:text-sm">The core of infinite density where known laws of physics break down. A bridge between general relativity and quantum mechanics.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-orange-500/5 p-6 sm:p-8 border border-orange-500/20 rounded-xl">
+                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">3. Imaging Breakthroughs</h3>
+                        <p class="mb-4 text-sm sm:text-base">In 2019, the Event Horizon Telescope (EHT) revealed the first image of a black hole in M87. In 2022, we successfully imaged <strong>Sagittarius A*</strong> at our own galaxy's center.</p>
+                        <p class="text-[10px] sm:text-xs opacity-60 italic">"By combining observations from multiple observatories, the system effectively created a telescope the size of our planet."</p>
+                    </div>
+                </div>
+
+                <div class="mt-12 sm:mt-20 pt-10 border-t border-white/5 text-center">
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-[0.5em] text-white/20 mb-8">End of Scientific Briefing</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="h-[50vh]"></section>
+    </main>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        let scene, camera, renderer, composer, bloomPass;
+        let blackHole, disk, stars, photonRing;
+        let blackHoleGroup; 
+        let isOpened = false;
+        let targetX = 0, targetY = 0;
+        let currentX = 0, currentY = 0;
+
+        const shatterContainer = document.getElementById('shatter-glass-container');
+        for (let i = 0; i < 144; i++) {
+            const shard = document.createElement('div');
+            shard.className = 'glass-shard';
+            shatterContainer.appendChild(shard);
+        }
+
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 4000);
+            camera.position.set(0, 0, 80);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            blackHoleGroup = new THREE.Group();
+            scene.add(blackHoleGroup);
+
+            const bhGeo = new THREE.SphereGeometry(2.5, 64, 64);
+            const bhMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            blackHole = new THREE.Mesh(bhGeo, bhMat);
+            blackHoleGroup.add(blackHole);
+
+            const ringGeo = new THREE.TorusGeometry(2.8, 0.05, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+            photonRing = new THREE.Mesh(ringGeo, ringMat);
+            blackHoleGroup.add(photonRing);
+
+            const particleCount = window.innerWidth < 768 ? 60000 : 120000;
+            const diskGeo = new THREE.BufferGeometry();
+            const pos = new Float32Array(particleCount * 3);
+            const cols = new Float32Array(particleCount * 3);
+            
+            for(let i=0; i<particleCount; i++) {
+                const r = 6 + Math.random() * 25;
+                const angle = Math.random() * Math.PI * 2;
+                const spiral = r * 0.15;
+                pos[i*3] = Math.cos(angle + spiral) * r;
+                pos[i*3+1] = (Math.random() - 0.5) * (0.1 + (r-6)*0.08);
+                pos[i*3+2] = Math.sin(angle + spiral) * r;
+                
+                const xPos = pos[i*3];
+                const relBeaming = (xPos + 25) / 50;
+                cols[i*3] = 1.0; 
+                cols[i*3+1] = 0.2 + (relBeaming * 0.6); 
+                cols[i*3+2] = 0.05 + (relBeaming * 0.2); 
+            }
+            
+            diskGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            diskGeo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+            disk = new THREE.Points(diskGeo, new THREE.PointsMaterial({ 
+                size: 0.05, 
+                vertexColors: true, 
+                transparent: true, 
+                opacity: 0.8, 
+                blending: THREE.AdditiveBlending 
+            }));
+            disk.rotation.x = 1.35;
+            blackHoleGroup.add(disk);
+
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 20000;
+            const starPos = new Float32Array(starCount * 3);
+            for(let i=0; i<starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 2000;
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.6 }));
+            scene.add(stars);
+
+            // Post Processing Setup - Ensure dependencies are loaded
+            try {
+                composer = new THREE.EffectComposer(renderer);
+                const renderPass = new THREE.RenderPass(scene, camera);
+                composer.addPass(renderPass);
+
+                if (THREE.UnrealBloomPass) {
+                    bloomPass = new THREE.UnrealBloomPass(
+                        new THREE.Vector2(window.innerWidth, window.innerHeight), 
+                        1.5, 0.4, 0.85
+                    );
+                    bloomPass.threshold = 0.1;
+                    bloomPass.strength = 1.8;
+                    bloomPass.radius = 1.0;
+                    composer.addPass(bloomPass);
+                }
+            } catch (e) {
+                console.warn("Post-processing failed, falling back to basic rendering:", e);
+                composer = null;
+            }
+
+            const handleMove = (x, y) => {
+                targetX = (x - window.innerWidth / 2) * 0.08;
+                targetY = -(y - window.innerHeight / 2) * 0.08;
+            };
+
+            window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+            window.addEventListener('touchmove', (e) => {
+                if(e.touches[0]) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+            });
+
+            animate();
+        }
+
+        function shatterAirlock() {
+            if (isOpened) return;
+            isOpened = true;
+
+            const tl = gsap.timeline();
+            tl.to('#shutter-progress', { scaleX: 1, duration: 1, ease: "power1.inOut" });
+            
+            tl.to('.glass-shard', {
+                z: () => Math.random() * 1500 + 500,
+                x: () => (Math.random() - 0.5) * 3000,
+                y: () => (Math.random() - 0.5) * 3000,
+                rotationX: () => Math.random() * 1000,
+                rotationY: () => Math.random() * 1000,
+                opacity: 0,
+                duration: 3,
+                stagger: { grid: [12,12], from: "center", amount: 0.8 },
+                ease: "power2.out"
+            });
+
+            tl.to('#airlock-overlay', { opacity: 0, pointerEvents: 'none', duration: 1.5 }, "-=2");
+            tl.to('#viewport-frame, #telemetry-hud, #control-panel', { opacity: 1, duration: 2 }, "-=1");
+            tl.to(camera.position, { z: 35, duration: 5, ease: "expo.out" }, "-=2.5");
+            tl.set('body', { overflowY: 'auto' });
+            tl.set('#main-content', { className: "+=active" });
+
+            ScrollTrigger.create({
+                trigger: "body",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5,
+                onUpdate: (self) => {
+                    const p = self.progress;
+                    camera.position.z = 35 - (p * 28);
+                    
+                    const dilation = (1 + (p * 212)).toFixed(4);
+                    const dist = Math.round(62000 - (p * 61850));
+                    document.getElementById('stat-dilation').innerText = `${dilation}x`;
+                    document.getElementById('stat-dist').innerText = `${dist.toLocaleString()} km`;
+                }
+            });
+        }
+
+        function toggleHUD(btn) {
+            const hud = document.getElementById('telemetry-hud');
+            const frame = document.getElementById('viewport-frame');
+            const isActive = hud.style.opacity === '1';
+            gsap.to([hud, frame], { opacity: isActive ? 0 : 1, duration: 0.5 });
+            btn.innerText = isActive ? "HUD: OFF" : "HUD: ON";
+            btn.classList.toggle('active');
+        }
+
+        function boostRadiation(btn) {
+            if (!bloomPass) return;
+            const isBoosted = bloomPass.strength > 2;
+            gsap.to(bloomPass, { strength: isBoosted ? 1.8 : 4.5, duration: 1 });
+            btn.innerText = isBoosted ? "EMISSION: NORM" : "EMISSION: MAX";
+            btn.classList.toggle('active');
+        }
+
+        function toggleLensing(btn) {
+            const isLensing = disk.rotation.x === 1.35;
+            gsap.to(disk.rotation, { x: isLensing ? 0 : 1.35, duration: 1.5 });
+            btn.innerText = isLensing ? "LENSING: FLAT" : "LENSING: ACTIVE";
+            btn.classList.toggle('active');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            currentX += (targetX - currentX) * 0.05;
+            currentY += (targetY - currentY) * 0.05;
+
+            if(blackHoleGroup) {
+                blackHoleGroup.position.x = currentX;
+                blackHoleGroup.position.y = currentY;
+                blackHoleGroup.rotation.y = currentX * 0.01;
+                blackHoleGroup.rotation.x = -currentY * 0.01;
+            }
+
+            if(disk) disk.rotation.z += 0.003;
+            
+            if(photonRing) {
+                photonRing.lookAt(camera.position);
+                photonRing.rotation.z += 0.01;
+            }
+
+            if (composer) {
+                composer.render();
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            if (composer) composer.setSize(w, h);
+        });
+
+        // Use window.onload to ensure all external scripts (Three.js plugins) are available
+        window.onload = init3D;
+    </script>
+</body>
+</html>

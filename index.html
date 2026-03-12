@@ -3,7 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE ABYSS | Cinematic Orbital Station</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>THE ABYSS | Interactive Black Hole Exploration & Scientific Guide</title>
+    <meta name="title" content="THE ABYSS | Interactive Black Hole Exploration & Scientific Guide">
+    <meta name="description" content="An immersive cinematic journey into the physics of black holes. Explore event horizons, time dilation, and the singularity through a high-fidelity 3D simulation.">
+    <meta name="keywords" content="black hole, event horizon, singularity, time dilation, astrophysics, 3D space simulation, interactive science">
+    <meta name="author" content="The Abyss Orbital Station">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://the-abyss-experience.com/">
+    <meta property="og:title" content="THE ABYSS | Cinematic Black Hole Experience">
+    <meta property="og:description" content="Explore the mysteries of the cosmos with our interactive 3D black hole simulator. Scientific insights on event horizons and general relativity.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="THE ABYSS | Cinematic Black Hole Experience">
+    <meta property="twitter:description" content="Interactive 3D simulation and scientific guide to the secrets of black holes and the event horizon.">
+
+    <!-- Structured Data (JSON-LD) for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Understanding the Secrets of Black Holes",
+      "description": "A comprehensive guide and interactive experience exploring the formation, types, and physics of black holes.",
+      "author": {
+        "@type": "Organization",
+        "name": "The Abyss Research Division"
+      },
+      "genre": "Astrophysics",
+      "keywords": "Black Holes, Event Horizon, Singularity, M87, Sagittarius A*",
+      "image": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80"
+    }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -198,18 +234,18 @@
     <div class="scanlines"></div>
 
     <!-- Background Control HUD -->
-    <div id="control-panel">
+    <nav id="control-panel" aria-label="Simulation Controls">
         <button class="ctrl-btn active" onclick="toggleHUD(this)">HUD: ON</button>
         <button class="ctrl-btn" onclick="boostRadiation(this)">EMISSION: NORM</button>
         <button class="ctrl-btn" onclick="toggleLensing(this)">LENSING: ACTIVE</button>
-    </div>
+    </nav>
 
     <!-- Opening Screen with Glass Shatter -->
-    <div id="airlock-overlay">
+    <div id="airlock-overlay" role="presentation">
         <div id="shatter-glass-container"></div>
         <div class="flex flex-col items-center gap-8 relative z-[102] px-4 text-center">
             <div id="shutter-status" class="font-sync text-[10px] text-white/40 tracking-[0.5em] uppercase animate-pulse">Structural Integrity: 100%</div>
-            <button id="shutter-btn" onclick="shatterAirlock()">Initiate Emergency Vent</button>
+            <button id="shutter-btn" onclick="shatterAirlock()" aria-label="Start Simulation">Initiate Emergency Vent</button>
             <div id="shutter-loader" class="w-24 h-1 bg-white/10 overflow-hidden">
                 <div class="w-full h-full bg-orange-500 origin-left scale-x-0" id="shutter-progress"></div>
             </div>
@@ -217,25 +253,25 @@
         </div>
     </div>
 
-    <div id="viewport-frame"></div>
+    <div id="viewport-frame" aria-hidden="true"></div>
 
     <!-- Telemetry HUD -->
-    <div id="telemetry-hud" class="font-mono">
+    <aside id="telemetry-hud" class="font-mono" aria-label="Real-time Telemetry">
         <div class="data-point">
-            <div class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest">Schwarzschild Radius</div>
+            <span class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest block">Schwarzschild Radius</span>
             <div class="text-lg md:text-xl text-white" id="stat-radius">12.42 km</div>
         </div>
         <div class="data-point">
-            <div class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest">Time Dilation Factor</div>
+            <span class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest block">Time Dilation Factor</span>
             <div class="text-lg md:text-xl text-white" id="stat-dilation">1.0000x</div>
         </div>
         <div class="data-point">
-            <div class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest">Distance to Singularity</div>
+            <span class="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest block">Distance to Singularity</span>
             <div class="text-lg md:text-xl text-white" id="stat-dist">62,000 km</div>
         </div>
-    </div>
+    </aside>
 
-    <div id="canvas-container"></div>
+    <div id="canvas-container" aria-hidden="true"></div>
 
     <main id="main-content">
         <!-- Hero Section -->
@@ -249,62 +285,64 @@
         </section>
 
         <!-- Article Section -->
-        <section class="min-h-screen py-10 sm:py-20 px-4 sm:px-6 md:px-20 lg:px-40 flex flex-col items-center">
+        <article class="min-h-screen py-10 sm:py-20 px-4 sm:px-6 md:px-20 lg:px-40 flex flex-col items-center">
             <div class="max-w-4xl glass-card p-6 sm:p-8 md:p-16 border-white/10 leading-relaxed text-gray-300">
-                <h2 class="font-sync text-xl sm:text-2xl md:text-4xl text-white mb-6 border-b border-orange-500/30 pb-4">Understanding the Secrets of Black Holes</h2>
+                <header>
+                    <h2 class="font-sync text-xl sm:text-2xl md:text-4xl text-white mb-6 border-b border-orange-500/30 pb-4 uppercase">The Secrets of Black Holes</h2>
+                </header>
                 
                 <p class="text-base sm:text-lg mb-8 text-white/90 italic">
-                    Black holes are among the most mysterious and fascinating objects in the universe. They are places where gravity becomes so strong that nothing—not even light—can escape their pull.
+                    Black holes are among the most mysterious and fascinating objects in the universe. They are regions of spacetime where gravity is so strong that nothing—not even light—can escape.
                 </p>
 
                 <div class="space-y-8 sm:space-y-12">
-                    <div>
-                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">1. Formation & Types</h3>
-                        <p class="mb-4 text-sm sm:text-base">A black hole is formed when an enormous amount of mass is compressed into a very small space. Most are born from the deaths of massive stars.</p>
+                    <section>
+                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">1. Formation & Stellar Types</h3>
+                        <p class="mb-4 text-sm sm:text-base">A black hole is formed when an enormous amount of mass is compressed into a very small space. Most are born from the explosive deaths of massive stars.</p>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6">
                             <div class="bg-white/5 p-4 rounded border border-white/5">
-                                <strong class="text-white block text-sm mb-1 uppercase">Stellar</strong>
+                                <h4 class="text-white block text-sm mb-1 uppercase font-bold">Stellar</h4>
                                 <span class="text-[10px] sm:text-xs">Formed from collapsing stars.</span>
                             </div>
                             <div class="bg-white/5 p-4 rounded border border-white/5">
-                                <strong class="text-white block text-sm mb-1 uppercase">Intermediate</strong>
+                                <h4 class="text-white block text-sm mb-1 uppercase font-bold">Intermediate</h4>
                                 <span class="text-[10px] sm:text-xs">Formed through mergers.</span>
                             </div>
                             <div class="bg-white/5 p-4 rounded border border-white/5">
-                                <strong class="text-white block text-sm mb-1 uppercase">Supermassive</strong>
+                                <h4 class="text-white block text-sm mb-1 uppercase font-bold">Supermassive</h4>
                                 <span class="text-[10px] sm:text-xs">Found at galactic centers.</span>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div>
-                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">2. Horizon & Singularity</h3>
+                    <section>
+                        <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">2. Event Horizon & Singularity</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                             <div class="border-l border-white/10 pl-6">
                                 <h4 class="text-white font-bold mb-2">Event Horizon</h4>
-                                <p class="text-xs sm:text-sm">The "Point of No Return". The boundary where escape velocity exceeds light speed. This is what creates the dark "shadow" we observe.</p>
+                                <p class="text-xs sm:text-sm">The "Point of No Return". The boundary where escape velocity exceeds light speed. This is what creates the dark "shadow" we observe in telescope images.</p>
                             </div>
                             <div class="border-l border-white/10 pl-6">
                                 <h4 class="text-white font-bold mb-2">Singularity</h4>
                                 <p class="text-xs sm:text-sm">The core of infinite density where known laws of physics break down. A bridge between general relativity and quantum mechanics.</p>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="bg-orange-500/5 p-6 sm:p-8 border border-orange-500/20 rounded-xl">
+                    <section class="bg-orange-500/5 p-6 sm:p-8 border border-orange-500/20 rounded-xl">
                         <h3 class="text-orange-500 font-sync text-xs sm:text-sm mb-4 uppercase tracking-widest">3. Imaging Breakthroughs</h3>
                         <p class="mb-4 text-sm sm:text-base">In 2019, the Event Horizon Telescope (EHT) revealed the first image of a black hole in M87. In 2022, we successfully imaged <strong>Sagittarius A*</strong> at our own galaxy's center.</p>
-                        <p class="text-[10px] sm:text-xs opacity-60 italic">"By combining observations from multiple observatories, the system effectively created a telescope the size of our planet."</p>
-                    </div>
+                        <footer class="text-[10px] sm:text-xs opacity-60 italic">"By combining observations from multiple observatories, the system effectively created a telescope the size of our planet."</footer>
+                    </section>
                 </div>
 
-                <div class="mt-12 sm:mt-20 pt-10 border-t border-white/5 text-center">
+                <footer class="mt-12 sm:mt-20 pt-10 border-t border-white/5 text-center">
                     <p class="text-[8px] sm:text-[10px] uppercase tracking-[0.5em] text-white/20 mb-8">End of Scientific Briefing</p>
-                </div>
+                </footer>
             </div>
-        </section>
+        </article>
 
-        <section class="h-[50vh]"></section>
+        <section class="h-[50vh]" aria-hidden="true"></section>
     </main>
 
     <script>
@@ -387,7 +425,6 @@
             stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.6 }));
             scene.add(stars);
 
-            // Post Processing Setup - Ensure dependencies are loaded
             try {
                 composer = new THREE.EffectComposer(renderer);
                 const renderPass = new THREE.RenderPass(scene, camera);
@@ -523,8 +560,8 @@
             if (composer) composer.setSize(w, h);
         });
 
-        // Use window.onload to ensure all external scripts (Three.js plugins) are available
         window.onload = init3D;
     </script>
 </body>
 </html>
+
